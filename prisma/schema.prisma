@@ -1,0 +1,88 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+model Project {
+  id             String          @id @default(cuid())
+  title          String
+  script         String
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+  shots          Shot[]
+  assets         Asset[]
+  licenseRecords LicenseRecord[]
+}
+
+model Shot {
+  id                String   @id @default(cuid())
+  projectId         String
+  project           Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  sequence          Int
+  title             String
+  brief             String
+  subject           String
+  motion            String
+  style             String
+  keywordsZh        String
+  keywordsEn        String
+  forbiddenTypes    String
+  durationTargetSec Int?
+  createdAt         DateTime @default(now())
+  assets            Asset[]
+
+  @@index([projectId, sequence])
+}
+
+model Asset {
+  id                   String          @id @default(cuid())
+  projectId            String
+  project              Project         @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  shotId               String
+  shot                 Shot            @relation(fields: [shotId], references: [id], onDelete: Cascade)
+  sourcePlatform       String
+  sourceAssetId        String
+  title                String?
+  thumbnailUrl         String
+  previewUrl           String?
+  downloadUrl          String
+  sourcePageUrl        String
+  licenseName          String
+  licenseUrl           String?
+  width                Int
+  height               Int
+  durationSec          Float?
+  isHorizontal         Boolean
+  score                Float
+  recommendationReason String
+  matchedKeywords      String
+  raw                  String
+  isFavorite           Boolean         @default(false)
+  createdAt            DateTime        @default(now())
+  licenseRecord        LicenseRecord?
+
+  @@unique([shotId, sourcePlatform, sourceAssetId])
+  @@index([projectId, shotId, score])
+}
+
+model LicenseRecord {
+  id                  String   @id @default(cuid())
+  projectId           String
+  project             Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  assetId             String?  @unique
+  asset               Asset?   @relation(fields: [assetId], references: [id], onDelete: SetNull)
+  sourcePlatform      String
+  sourceAssetId       String
+  licenseName         String
+  licenseUrl          String?
+  sourcePageUrl       String
+  termsSummary        String
+  capturedAt          DateTime @default(now())
+  raw                 String?
+
+  @@index([projectId, sourcePlatform])
+}
